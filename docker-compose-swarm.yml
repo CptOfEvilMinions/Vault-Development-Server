@@ -1,0 +1,165 @@
+
+version: '3.9'
+services: 
+  ######################################### NGINX #########################################
+  nginx:
+    image: nginx:1.19.6-alpine
+    configs:
+      - source: nginx-config
+        target: /etc/nginx/nginx.conf
+      - source: nginx-vault-config
+        target: /etc/nginx/conf.d/vault.conf
+    secrets:
+      - nginx-tls-cert
+      - nginx-tls-key
+    networks: 
+      - default
+      - vault-backend
+    ports: 
+      - 8000:80
+      - 8443:443
+    depends_on: 
+      - vault
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          cpus: '1'
+          memory: 150M
+        reservations:
+          cpus: '0.25'
+          memory: 25M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 10
+        window: 120s
+    
+  ######################################### Vault #########################################
+  vault:
+    image: vault:1.6.2
+    command: sh -c '/vault/vault-entrypoint-script.sh & vault server -config=/vault/config/vault-config.hcl && fg'
+    secrets:
+      - vault-dev-server-rootCA-key
+      - vault-dev-server-rootCA-cert
+      - vault-dev-server-ldap-bind-url
+      - vault-dev-server-ldap-bind-username
+      - vault-dev-server-ldap-bind-password
+    configs:
+      - source: vault-entrypoint-script
+        target: /vault/vault-entrypoint-script.sh
+        uid: '100'
+        gid: '100'
+        mode: 0755
+      - source: vault-config
+        target: /vault/config/vault-config.hcl
+        uid: '100'
+        gid: '100'
+        mode: 0440
+      - source: vault-ldap-admin-policy
+        target: /vault/policies/vault-policy-admin-user.hcl
+        uid: '100'
+        gid: '100'
+        mode: 0440
+      - source: vault-ldap-auth-config
+        target: /vault/config/vault-ldap-config.ldif
+        uid: '100'
+        gid: '100'
+        mode: 0440
+    networks: 
+      - vault-backend
+    environment:
+      - VAULT_ADDR=http://127.0.0.1:8200
+      - VAULT_API_ADDR=http://127.0.0.1:8200
+    volumes:
+      - vault-policies:/vault/policies
+      - vault-data:/vault/data
+      - vault-logs:/vault/logs
+    depends_on:
+      - consul
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          cpus: '1'
+          memory: 300M
+        reservations:
+          cpus: '0.5'
+          memory: 50M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 10
+        window: 120s
+    
+
+  ######################################### Consul #########################################
+  consul:
+    image: consul:1.9.3
+    # DO NOT REMOVE the default is `consul agent dev`
+    entrypoint: consul agent -config-file=/consul/config/consul-config.hcl
+    configs:
+      - source: consul-config
+        target: /consul/config/consul-config.hcl
+    networks: 
+      - vault-backend
+    volumes:
+      - consul-data:/consul/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          cpus: '1'
+          memory: 150M
+        reservations:
+          cpus: '0.5'
+          memory: 50M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 10
+        window: 120s
+
+networks: 
+  vault-backend:
+
+volumes:
+  consul-data:
+  vault-policies:
+  vault-data:
+  vault-logs:
+
+secrets:
+  nginx-tls-cert:
+    file: ./conf/tls/nginx.crt
+  nginx-tls-key:
+    file: ./conf/tls/nginx.key
+  vault-dev-server-rootCA-key:
+    external: true
+  vault-dev-server-rootCA-cert:
+    external: true
+  vault-dev-server-ldap-bind-url:
+    external: true
+  vault-dev-server-ldap-bind-username:
+    external: true
+  vault-dev-server-ldap-bind-password:
+    external: true
+
+configs:
+  nginx-config:
+    file: ./conf/nginx/nginx.conf
+  nginx-vault-config:
+    file: ./conf/nginx/nginx-vault-swarm.conf
+  consul-config:
+    file: ./conf/consul/consul-config-swarm.hcl
+  vault-config:
+    file: ./conf/vault/vault-config-swarm.hcl
+  vault-ldap-auth-config:
+    file: ./conf/vault/auth/ldap.ldif
+  vault-ldap-admin-policy:
+    file: ./conf/vault/policies/admin-user-policy.hcl
+  vault-entrypoint-script:
+    file: ./conf/vault/vault_entrypoint_setup.sh

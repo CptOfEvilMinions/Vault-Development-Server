@@ -1,0 +1,3 @@
+conf/root_ca/*
+!conf/root_ca/root_ca.conf.example
+conf/tls/*

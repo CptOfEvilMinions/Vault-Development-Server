@@ -1,0 +1,8 @@
+dn: uid=vault,cn=sysaccounts,cn=etc,dc=example,dc=com
+changetype: add
+objectclass: account
+objectclass: simplesecurityobject
+uid: vault
+userPassword: <password>
+passwordExpirationTime: 20380119031407Z
+nsIdleTimeout: 0

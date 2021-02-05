@@ -1,0 +1,9 @@
+url={{ LDAP_URL }}
+userdn=cn=users,cn=accounts,dc={{ LDAP_DOMAIN_NAME }},dc={{ LDAP_DOMAIN_TLD }}
+userattr=uid
+insecure_tls=true
+starttls=true
+groupdn=cn=groups,cn=accounts,dc={{ LDAP_DOMAIN_NAME }},dc={{ LDAP_DOMAIN_TLD }}
+groupattr=cn
+binddn=uid={{ BIND_USERNAME }},cn=sysaccounts,cn=etc,dc={{ LDAP_DOMAIN_NAME }},dc={{ LDAP_DOMAIN_TLD }}
+bindpass={{ BIND_PASSWORD }}
