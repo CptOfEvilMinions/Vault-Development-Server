@@ -3,6 +3,6 @@ changetype: add
 objectclass: account
 objectclass: simplesecurityobject
 uid: vault
-userPassword: <password>
+userPassword: changeme
 passwordExpirationTime: 20380119031407Z
 nsIdleTimeout: 0
