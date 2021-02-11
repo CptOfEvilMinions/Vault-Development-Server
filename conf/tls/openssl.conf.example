@@ -1,0 +1,29 @@
+[req]
+default_bits = 8192                             # Use 8192 bit key
+encrypt_key = no                                # Disable password encryption
+prompt = no                                     
+utf8 = yes  
+default_md = sha512                             # Use SHA512
+distinguished_name = my_req_distinguished_name  
+
+[ v3_ca ]
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid:always,issuer
+basicConstraints = critical, CA:TRUE, pathlen:3
+keyUsage = critical, cRLSign, keyCertSign
+nsCertType = sslCA, emailCA
+
+[ my_req_distinguished_name ]
+C = US
+ST = NY
+L = Buffalo
+O = Example
+commonName = ${ENV::COMMON_NAME}
+
+[ v3_req ]
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+subjectAltName = @alt_names
+
+[ alt_names ]
+DNS.1 = ${ENV::COMMON_NAME}

@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+#### ENV vars ####
+export VAULT_ADDR=http://127.0.0.1:8200
+
 # Install tools
 apk add curl jq
 
@@ -15,14 +18,13 @@ while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' http://127.0.0.1:8200/v1/sy
 echo "[+] - $(date) - Vault has started"
 
 # Check if Vault has been initialized
-if [ $(curl -s http://127.0.0.1:8200/v1/sys/health| jq .initialized) = "false" ]
+if [ $(curl -s http://127.0.0.1:8200/v1/sys/health | jq .initialized) = "false" ]
 then
     # Change permissions of /vault/data directory
     chown vault:vault -R /vault/data
 
     # Vault init
     echo "[*] - $(date) - Initializing Vault"
-    export VAULT_ADDR=http://127.0.0.1:8200
     vault operator init -key-shares=1 -key-threshold=1 > /vault/data/vault_keys.txt
     echo "[+] - $(date) - Vault initialized"
 
