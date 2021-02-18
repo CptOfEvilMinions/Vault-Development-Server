@@ -62,6 +62,11 @@ then
 
     ### Enable root PKI ###
     vault secrets enable pki
+    vault secrets tune -max-lease-ttl=87600h pki
+    vault write pki/config/urls \
+        issuing_certificates="http://127.0.0.1:8200/v1/pki/ca" \
+        crl_distribution_points="http://127.0.0.1:8200/v1/pki/crl"
+
     echo "[+] - $(date) - Enabled Vault PKI"
     
     # Create CA bundle
@@ -74,11 +79,12 @@ then
     # https://rcronco.github.io/lemur_vault/Vault_CA.html
     vault write pki/config/ca pem_bundle="@/tmp/ca_bundle.pem"
     vault write pki/roles/$(openssl x509 -noout -subject -in /run/secrets/*-rootCA-cert -nameopt multiline | grep commonName | awk '{print $3}' | tr . -)-role \
-        allow_any_name=true \
+        # Only allow certificates to be generated for domain listed in cert
+        allowed_domains="$(openssl x509 -noout -subject -in /run/secrets/*-rootCA-cert -nameopt multiline | grep commonName | awk '{print $3}')" \
+        # Allow sub-domain certs to be generated
         allow_subdomains=true \
-        allow_ip_sans=true \
-        max_ttl="72h" \
-        allow_localhost=true
+        # Max lease time
+        max_ttl="72h"
     echo "[+] - $(date) - Uploaded Root CA bundle to Vault"
 
     echo -e "\n\n######################################################################"
