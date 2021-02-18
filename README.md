@@ -1,6 +1,6 @@
 # My development server for Vault
 
-* Blog post on setup: [My development server for Vault](https://holdmybeersecurity.com/2021/02/11/my-development-server-for-vault)
+* Blog post on setup: [My development server for Vault](https://holdmybeersecurity.com/2021/02/16/my-development-server-for-vault/)
 
 ## References
 * [Get common name (CN) from SSL certificate?](https://unix.stackexchange.com/questions/103461/get-common-name-cn-from-ssl-certificate)
